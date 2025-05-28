@@ -1,6 +1,30 @@
 import streamlit as st
 import pandas as pd
 
+# Inject CSS to adjust sidebar width and font size
+st.markdown(
+    """
+    <style>
+    /* 1. Expand sidebar width */
+    [data-testid="stSidebar"][aria-expanded="true"] {
+        width: 350px;  /* adjust width as needed */
+    }
+    /* 2. Shrink text in sidebar table */
+    [data-testid="stSidebar"] .stTable td, 
+    [data-testid="stSidebar"] .stTable th {
+        font-size: 12px !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    /* 3. Reduce padding around sidebar content */
+    [data-testid="stSidebar"] .css-1oe6wy3 {
+        padding: 0.5rem 0.5rem 0.5rem 0.5rem !important;
+    }
+    </style>
+    """, unsafe_allow_html=True
+)
+
+st.write("✅ Sidebar CSS injected: wider, smaller text, tighter padding.")
+
 # Page config
 st.set_page_config(page_title="Trade Quote Wizard", layout="wide")
 
