@@ -139,7 +139,6 @@ add_item("Materials & Setup", visits, "v", f"base £{materials_base} + £{materi
 
 df = pd.DataFrame(items, columns=["I", "Qty", "U", "R", "T(£)"])
 
-df["Total (£)"] = df["Total (£)"].round(2)
 st.sidebar.table(df)
 
 subtotal = df["Total (£)"].sum()
