@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 
+# Page config
+st.set_page_config(page_title="Trade Quote Wizard", layout="wide")
+
 # Inject CSS to adjust sidebar width and font size
 st.markdown(
     """
@@ -24,9 +27,6 @@ st.markdown(
 )
 
 st.write("✅ Sidebar CSS injected: wider, smaller text, tighter padding.")
-
-# Page config
-st.set_page_config(page_title="Trade Quote Wizard", layout="wide")
 
 # Title
 st.title("🏗️ Trade Quote Wizard: Painting & Decorating")
