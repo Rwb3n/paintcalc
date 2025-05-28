@@ -138,6 +138,7 @@ if include_prep:
 add_item("Materials & Setup", visits, "v", f"base £{materials_base} + £{materials_extra}/extra", materials_total)
 
 df = pd.DataFrame(items, columns=["I", "Qty", "U", "R", "T(£)"])
+
 df["Total (£)"] = df["Total (£)"].round(2)
 st.sidebar.table(df)
 
