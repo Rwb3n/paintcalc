@@ -10,7 +10,7 @@ st.markdown(
     <style>
     /* 1. Expand sidebar width */
     [data-testid="stSidebar"][aria-expanded="true"] {
-        width: 650px;  /* adjust width as needed */
+        width: 100vw;  /* adjust width as needed */
     }
     /* 2. Shrink text in sidebar table */
     [data-testid="stSidebar"] .stTable td, 
