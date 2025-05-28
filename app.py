@@ -20,7 +20,7 @@ st.markdown(
     }
     /* 3. Reduce padding around sidebar content */
     [data-testid="stSidebar"] .css-1oe6wy3 {
-        padding: 0.5rem 0.5rem 0.5rem 0.5rem !important;
+        padding: 0.1rem 0.1rem 0.1rem 0.1rem !important;
     }
     </style>
     """, unsafe_allow_html=True
