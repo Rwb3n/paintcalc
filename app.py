@@ -129,15 +129,15 @@ add_item("Skirting", skirting, "m", skirting_rate, skirting_total)
 add_item("Doors", doors, "#", doors_rate, doors_total)
 add_item("Windows", windows, "#", windows_rate, windows_total)
 if wallpaper_jobs > 0:
-    add_item("Wallpaper Removal", wallpaper_jobs, "job", f"min £{wallpaper_min_fee}", wallpaper_total)
+    add_item("Wallpaper Removal", wallpaper_jobs, "j", f"min £{wallpaper_min_fee}", wallpaper_total)
 if mode in ["Strip Only", "Full Package"]:
-    add_item("General Labour (Flat Fee)", 1, "job", general_labour_rate, general_labour_total)
+    add_item("General Labour (Flat Fee)", 1, "j", general_labour_rate, general_labour_total)
 add_item("Primer Application", walls, "m²", primer_rate, primer_total)
 if include_prep:
-    add_item("Surface Prep & Filler", 1, "job", prep_rate, prep_total)
-add_item("Materials & Setup", visits, "visits", f"base £{materials_base} + £{materials_extra}/extra", materials_total)
+    add_item("Surface Prep & Filler", 1, "j", prep_rate, prep_total)
+add_item("Materials & Setup", visits, "v", f"base £{materials_base} + £{materials_extra}/extra", materials_total)
 
-df = pd.DataFrame(items, columns=["Item", "Quantity", "Unit", "Rate", "Total (£)"])
+df = pd.DataFrame(items, columns=["I", "Qty", "U", "R", "T(£)"])
 st.sidebar.table(df)
 
 subtotal = df["Total (£)"].sum()
