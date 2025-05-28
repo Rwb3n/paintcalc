@@ -1,29 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-st.markdown(
-    """
-    <style>
-    /* Expand the sidebar width */
-    [data-testid="stSidebar"][aria-expanded="true"] {
-        width: 350px;  /* tweak this value for more/less width */
-    }
-    /* Reduce font size and padding in tables */
-    [data-testid="stSidebar"] .stTable td, 
-    [data-testid="stSidebar"] .stTable th {
-        font-size: 12px !important;
-        padding: 0.25rem 0.5rem !important;
-    }
-    /* Tighten sidebar content padding */
-    [data-testid="stSidebar"] .css-1oe6wy3 {
-        padding: 0.5rem !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
 # Page config
 st.set_page_config(page_title="Trade Quote Wizard", layout="wide")
 
