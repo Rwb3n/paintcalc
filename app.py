@@ -92,35 +92,44 @@ primer_total = walls * primer_rate if walls > 0 else 0
 prep_total = prep_rate if include_prep else 0
 materials_total = materials_base + max(0, (visits - 1) * materials_extra)
 
-# 7. Build and display summary in sidebar (sticky)
-st.sidebar.header("📝 Quote Summary")
-items = []
-def add_item(name, qty, unit, rate, total):
-    if total > 0:
-        items.append((name, qty, unit, rate, total))
+# 7. Build and display summary in a drawer-like expander
 
-add_item("Walls", walls, "m²", walls_rate, walls_total)
-add_item("Ceilings", ceilings, "m²", ceilings_rate, ceilings_total)
-add_item("Skirting", skirting, "m", skirting_rate, skirting_total)
-add_item("Doors", doors, "#", doors_rate, doors_total)
-add_item("Windows", windows, "#", windows_rate, windows_total)
-if wallpaper_jobs > 0:
-    add_item("Wallpaper Removal", wallpaper_jobs, "j", f"min £{wallpaper_min_fee}", wallpaper_total)
-if mode in ["Strip Only", "Full Package"]:
-    add_item("General Labour (Flat Fee)", 1, "j", general_labour_rate, general_labour_total)
-add_item("Primer Application", walls, "m²", primer_rate, primer_total)
-if include_prep:
-    add_item("Surface Prep & Filler", 1, "j", prep_rate, prep_total)
-add_item("Materials & Setup", visits, "v", f"base £{materials_base} + £{materials_extra}/extra", materials_total)
+st.markdown("## 📋 Quote Summary")
+with st.expander("Click to view detailed quote summary", expanded=True):
+    items = []
 
-df = pd.DataFrame(items, columns=["I", "Qty", "U", "R", "T(£)"])
+    def add_item(name, qty, unit, rate, total):
+        if total > 0:
+            items.append((name, qty, unit, rate, total))
 
-st.sidebar.table(df)
+    add_item("Walls", walls, "m²", walls_rate, walls_total)
+    add_item("Ceilings", ceilings, "m²", ceilings_rate, ceilings_total)
+    add_item("Skirting", skirting, "m", skirting_rate, skirting_total)
+    add_item("Doors", doors, "#", doors_rate, doors_total)
+    add_item("Windows", windows, "#", windows_rate, windows_total)
 
-subtotal = df["Total (£)"].sum()
-vat = subtotal * 0.2
-total = subtotal + vat
-st.sidebar.markdown(f"**Subtotal:** £{subtotal:,.2f}")
-st.sidebar.markdown(f"**VAT (20%):** £{vat:,.2f}")
-st.sidebar.markdown(f"**Total:** £{total:,.2f}")
+    if wallpaper_jobs > 0:
+        add_item("Wallpaper Removal", wallpaper_jobs, "j", f"min £{wallpaper_min_fee}", wallpaper_total)
+
+    if mode in ["Strip Only", "Full Package"]:
+        add_item("General Labour (Flat Fee)", 1, "j", general_labour_rate, general_labour_total)
+
+    add_item("Primer Application", walls, "m²", primer_rate, primer_total)
+
+    if include_prep:
+        add_item("Surface Prep & Filler", 1, "j", prep_rate, prep_total)
+
+    add_item("Materials & Setup", visits, "v", f"base £{materials_base} + £{materials_extra}/extra", materials_total)
+
+    df = pd.DataFrame(items, columns=["Item", "Qty", "Unit", "Rate", "Total (£)"])
+    st.table(df)
+
+    subtotal = df["Total (£)"].sum()
+    vat = subtotal * 0.2
+    total = subtotal + vat
+
+    st.markdown(f"**Subtotal:** £{subtotal:,.2f}")
+    st.markdown(f"**VAT (20%):** £{vat:,.2f}")
+    st.markdown(f"**Total:** £{total:,.2f}")
+
 
