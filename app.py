@@ -122,7 +122,8 @@ with st.expander("Click to view detailed quote summary", expanded=True):
     add_item("Materials & Setup", visits, "visit", f"base £{materials_base} + £{materials_extra}/extra", materials_total)
 
     df = pd.DataFrame(items, columns=["Item", "Qty", "Unit", "Rate", "Total (£)"])
-    st.table(df)
+    st.dataframe(df, use_container_width=True)
+
 
     subtotal = df["Total (£)"].sum()
     vat = subtotal * 0.2
