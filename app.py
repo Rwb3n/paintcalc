@@ -109,17 +109,17 @@ with st.expander("Click to view detailed quote summary", expanded=True):
     add_item("Windows", windows, "#", windows_rate, windows_total)
 
     if wallpaper_jobs > 0:
-        add_item("Wallpaper Removal", wallpaper_jobs, "j", f"min £{wallpaper_min_fee}", wallpaper_total)
+        add_item("Wallpaper Removal", wallpaper_jobs, "job", f"min £{wallpaper_min_fee}", wallpaper_total)
 
     if mode in ["Strip Only", "Full Package"]:
-        add_item("General Labour (Flat Fee)", 1, "j", general_labour_rate, general_labour_total)
+        add_item("General Labour (Flat Fee)", 1, "job", general_labour_rate, general_labour_total)
 
     add_item("Primer Application", walls, "m²", primer_rate, primer_total)
 
     if include_prep:
-        add_item("Surface Prep & Filler", 1, "j", prep_rate, prep_total)
+        add_item("Surface Prep & Filler", 1, "job", prep_rate, prep_total)
 
-    add_item("Materials & Setup", visits, "v", f"base £{materials_base} + £{materials_extra}/extra", materials_total)
+    add_item("Materials & Setup", visits, "visit", f"base £{materials_base} + £{materials_extra}/extra", materials_total)
 
     df = pd.DataFrame(items, columns=["Item", "Qty", "Unit", "Rate", "Total (£)"])
     st.table(df)
