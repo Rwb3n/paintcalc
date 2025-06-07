@@ -1,0 +1,59 @@
+Analysis of Tab 3 (Summary) Calculations:
+
+The variables `material_cost` and `labour_cost` are calculated in Tab 2. If no rooms are added (`st.session_state.rooms` is empty), these costs will be 0. Consequently, all calculations in Tab 3 will correctly result in 0, which is appropriate for a quote with no billable items.
+
+**mat_cont = material_cost * preset["material_contingency"] / 100**
+- Clarity: Clear. `mat_cont` is a reasonable abbreviation for material contingency. The formula is standard for percentage calculation.
+- Correctness: Correct. This calculates the contingency amount for materials by multiplying the `material_cost` by the `material_contingency` percentage (obtained from presets and converted to a decimal by dividing by 100).
+- Potential Issues:
+    - `KeyError`: If `preset["material_contingency"]` key is missing from the `preset` dictionary.
+- Assumptions:
+    - Assumes `preset["material_contingency"]` is a numerical value representing a percentage (e.g., 5 for 5%).
+    - Assumes `material_cost` has been correctly calculated in Tab 2.
+
+**lab_cont = labour_cost * preset["labour_contingency"] / 100**
+- Clarity: Clear. `lab_cont` is a reasonable abbreviation for labour contingency. The formula is standard.
+- Correctness: Correct. This calculates the contingency amount for labour by multiplying the `labour_cost` by the `labour_contingency` percentage.
+- Potential Issues:
+    - `KeyError`: If `preset["labour_contingency"]` key is missing from the `preset` dictionary.
+- Assumptions:
+    - Assumes `preset["labour_contingency"]` is a numerical value representing a percentage (e.g., 10 for 10%).
+    - Assumes `labour_cost` has been correctly calculated in Tab 2.
+
+**subtotal = material_cost + mat_cont + labour_cost + lab_cont**
+- Clarity: Very clear. "Subtotal" is a standard term, and the calculation is a simple sum of its constituent parts.
+- Correctness: Correct. It accurately sums the base material and labour costs along with their respective contingency amounts.
+- Potential Issues: None specific to this line, other than those inherited from the correctness of its input variables.
+- Assumptions:
+    - Assumes `material_cost`, `mat_cont`, `labour_cost`, and `lab_cont` are the correct and final values to be included in this stage of subtotaling.
+
+**markup = subtotal * preset["markup_percent"] / 100**
+- Clarity: Clear. "Markup" and "markup_percent" are standard business terms.
+- Correctness: Correct. This calculates the markup amount by applying the `markup_percent` (from presets) to the `subtotal`.
+- Potential Issues:
+    - `KeyError`: If `preset["markup_percent"]` key is missing from the `preset` dictionary.
+- Assumptions:
+    - Assumes `preset["markup_percent"]` is a numerical value representing the percentage to be added for profit/overhead.
+
+**total = subtotal + markup**
+- Clarity: Very clear. "Total" here signifies the sum of the subtotal and the markup.
+- Correctness: Correct. It accurately calculates the total cost before the application of VAT (Value Added Tax).
+- Potential Issues: None specific to this line.
+- Assumptions:
+    - Assumes this "total" is the basis for VAT calculation if applicable.
+
+**vat = total * preset["vat_rate"] / 100 if preset["vat_applicable"] else 0**
+- Clarity: Clear. The conditional logic based on `preset["vat_applicable"]` is explicit and easy to understand.
+- Correctness: Correct. The VAT is calculated by applying the `vat_rate` (from presets) to the `total` only if `vat_applicable` is true. If not, VAT is correctly set to 0.
+- Potential Issues:
+    - `KeyError`: If `preset["vat_rate"]` or `preset["vat_applicable"]` keys are missing from the `preset` dictionary.
+- Assumptions:
+    - Assumes `preset["vat_rate"]` is a numerical value representing the VAT percentage.
+    - Assumes `preset["vat_applicable"]` is a boolean value that correctly reflects whether VAT should be applied to the quote.
+
+**grand_total = total + vat**
+- Clarity: Very clear. "Grand Total" is a universally understood term for the final sum.
+- Correctness: Correct. It accurately calculates the final amount to be paid by adding the `vat` to the pre-tax `total`.
+- Potential Issues: None specific to this line.
+- Assumptions:
+    - Assumes this is the final amount the client is expected to pay, inclusive of all costs, contingencies, markup, and taxes.

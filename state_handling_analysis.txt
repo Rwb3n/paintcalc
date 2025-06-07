@@ -1,0 +1,49 @@
+Analysis of Input Handling and State Management in `app.py`:
+
+**Initialization of `st.session_state.rooms`**:
+- Method: `if "rooms" not in st.session_state: st.session_state.rooms = []`
+- Clarity: Clear. This is the standard and recommended way to initialize a list within Streamlit's session state.
+- Robustness: Robust for its purpose. It correctly creates an empty list if one doesn't exist at the start of the session or on a full app reload, and preserves the list across user interactions within the same session.
+
+**Adding Rooms (Input Handling in Tab 1)**:
+- Method: When the "➕ Add Room" button is clicked, `st.session_state.rooms.append({"name": name, "area": area, "coats": coats})` is executed.
+- Data stored: Each room is a dictionary with three keys:
+    - `name`: A string from `st.text_input`.
+    - `area`: A float from `st.number_input`, with `min_value=0.0`.
+    - `coats`: An integer from `st.number_input`, with `min_value=1`.
+- Potential Issues & Input Validation:
+    - Room Name (`name`):
+        - `st.text_input` allows any string, including empty strings. No explicit validation is performed to ensure the name is non-empty or unique.
+        - Duplicate room names are allowed. This might be confusing for the user but doesn't break current calculations.
+    - Wall Area (`area`): Validated by `st.number_input` to be a float ≥ 0.0.
+    - Number of Coats (`coats`): Validated by `st.number_input` to be an integer ≥ 1.
+    - No mechanism exists to edit or remove rooms once added, only to append new ones.
+
+**`total_area` Calculation from State (in Tab 2)**:
+- Method: `total_area = sum(r['area'] * r['coats'] for r in st.session_state.rooms)`
+- Correctness: Correct. It iterates through the list of dictionaries in `st.session_state.rooms` and correctly sums the product of `area` and `coats` for each room.
+- Behavior with empty `st.session_state.rooms`: If `st.session_state.rooms` is empty, the `sum()` function correctly returns `0`.
+
+**Impact of Empty State on Tab 2 and Tab 3 Calculations**:
+- If `st.session_state.rooms` is empty, `total_area` will be `0`.
+- **Tab 2 Calculations**:
+    - `litres = total_area / preset["material"]["coverage_per_litre"]`: If `total_area` is 0, `litres` will be `0.0` (assuming `coverage_per_litre` is non-zero, which it is in the preset).
+    - `material_cost = litres * preset["material"]["cost_per_litre"]`: Will be `0.0 * cost = 0.0`.
+    - `labour_hours = total_area * preset["labour_rate_per_sqm"]`: Will be `0.0 * rate = 0.0`.
+    - `labour_cost = labour_hours * preset["hourly_rate"]`: Will be `0.0 * rate = 0.0`.
+    - All metrics displayed in Tab 2 will correctly show `0.00`.
+- **Tab 3 Calculations**:
+    - With `material_cost` and `labour_cost` being `0`, all subsequent calculations in Tab 3 (`mat_cont`, `lab_cont`, `subtotal`, `markup`, `total`, `vat`, `grand_total`) will also correctly evaluate to `0`.
+    - The summary in Tab 3 will display all monetary values as £0.00.
+- This behavior (all costs and totals being zero when no rooms are added) is logical and appropriate for the application.
+
+**Overall State Management**:
+- Clarity: The primary state variable `st.session_state.rooms` is clearly named, and its usage as a list of room details is straightforward and easy to follow.
+- Robustness & Potential Issues:
+    - The current state management is robust for a single-user application like Streamlit. Traditional race conditions are not a concern.
+    - State corruption is unlikely with the simple append operations.
+- Potential improvements:
+    - Consider adding validation for the room name (e.g., disallow empty names).
+    - A feature to allow users to remove or edit rooms from the `st.session_state.rooms` list would enhance usability.
+    - For significantly more complex state, dedicated data classes or more structured dictionaries might be considered, but the current list of dictionaries is adequate for this application's scale.
+    - The preset configuration `preset` is global and not part of `st.session_state`. This is fine for presets, but if it were user-configurable, it would also need to be managed within the session state.

@@ -1,0 +1,83 @@
+# Audit Report for `app.py` Quote Builder Prototype
+
+## 1. Introduction and Overall Summary
+
+This report summarizes the findings of a code audit for the `app.py` Streamlit application, a prototype for building quotes. The audit focused on calculation logic in Tab 2 (Estimates) and Tab 3 (Summary), input handling, session state management, and the usage of the `preset` configuration dictionary.
+
+Overall, the application's calculation logic is clear, follows standard quoting practices, and uses descriptive variable names. Mathematical operations generally appear correct given the context. State management is straightforward and suitable for the current scale. The preset configuration is well-utilized for managing rates and parameters. However, areas for improvement include enhancing input validation, adding more robust error handling for preset configurations, and incorporating features for better user interaction (e.g., editing/deleting rooms).
+
+## 2. Calculation Logic Review
+
+### 2.1. Tab 2 (Estimates) Calculations
+
+The calculations for `total_area`, `litres`, `material_cost`, `labour_hours`, and `labour_cost` were reviewed.
+
+-   **Clarity and Correctness**: The logic is generally clear and the formulas used are standard for estimation.
+    -   `total_area = sum(r['area'] * r['coats'] for r in st.session_state.rooms)`: Correctly calculates the total paintable area, accounting for multiple coats. It gracefully handles an empty room list, resulting in `total_area = 0`.
+    -   `litres = total_area / preset["material"]["coverage_per_litre"]`: Correctly calculates paint quantity.
+    -   `material_cost = litres * preset["material"]["cost_per_litre"]`: Straightforward multiplication, appears correct.
+    -   `labour_hours = total_area * preset["labour_rate_per_sqm"]`: Straightforward multiplication, appears correct.
+    -   `labour_cost = labour_hours * preset["hourly_rate"]`: Straightforward multiplication, appears correct.
+-   **Potential Issues**:
+    -   A `ZeroDivisionError` could occur in the `litres` calculation if `preset["material"]["coverage_per_litre"]` were `0`. While currently `12.0` in the static preset, this highlights a dependency on correct preset configuration.
+    -   `KeyError` could occur if expected keys are missing from the `preset` dictionary (e.g., `preset["material"]` or its sub-keys).
+
+### 2.2. Tab 3 (Summary) Calculations
+
+The calculations for `mat_cont`, `lab_cont`, `subtotal`, `markup`, `total`, `vat`, and `grand_total` were reviewed.
+
+-   **Clarity and Correctness**: The logic is clear and follows standard financial calculations for quotes.
+    -   Contingency calculations (`mat_cont`, `lab_cont`) correctly apply percentages to base costs.
+    -   `subtotal` correctly sums base costs and contingencies.
+    -   `markup` correctly applies a percentage to the subtotal.
+    -   `total` correctly sums subtotal and markup.
+    -   `vat = total * preset["vat_rate"] / 100 if preset["vat_applicable"] else 0`: Correctly implements conditional VAT calculation.
+    -   `grand_total` correctly sums total and VAT.
+    -   Division by `100` for converting percentages to decimals is consistently and correctly applied.
+-   **Potential Issues**:
+    -   No division-by-zero risks are present within these specific calculations.
+    -   Potential `KeyError` if percentage keys (e.g., `material_contingency`, `markup_percent`, `vat_rate`) or `vat_applicable` are missing from the `preset` dictionary.
+
+## 3. Input Handling and State Management
+
+-   **Initialization & Appending**: `st.session_state.rooms` is correctly initialized as an empty list if not already present. Rooms are appended as dictionaries containing `name`, `area`, and `coats`.
+-   **Handling Empty State**: The application gracefully handles cases where `st.session_state.rooms` is empty. This results in `total_area = 0`, which correctly propagates through all subsequent calculations in Tab 2 and Tab 3, leading to zero costs and totals.
+-   **Input Validation**:
+    -   `st.number_input` provides basic validation for `area` (must be ≥ 0.0) and `coats` (must be ≥ 1).
+    -   There is no specific validation for room `name` (e.g., to prevent empty strings or ensure uniqueness).
+-   **Room Management**: Currently, users can only add rooms. There is no functionality to edit or delete rooms once they are added to the list.
+-   **Clarity & Robustness**: State variable names are clear. For the application's current scope and single-user model (Streamlit), state management is straightforward and robust against common web app issues like race conditions.
+
+## 4. Preset Configuration Usage
+
+-   **Centralization & Clarity**: The `preset` dictionary effectively centralizes configurable parameters (rates, percentages, material properties), which is good for clarity and maintainability. Key names are generally descriptive.
+-   **Key Usage**:
+    -   Most keys within the `preset` dictionary, including nested keys under `preset["material"]`, are correctly used in the calculations in Tab 2 and Tab 3.
+    -   The key `preset["name"]` is currently unused in calculations or UI display.
+-   **Hardcoded Values**: No "magic numbers" were identified in the calculation logic that should clearly be part of the `preset` dictionary. The division by `100` for percentages is standard.
+-   **Access Consistency**: Values are consistently accessed via direct dictionary key lookup (e.g., `preset["key"]`). This is acceptable for a static, globally defined preset.
+
+## 5. Key Potential Issues and Areas for Improvement
+
+-   **Configuration Robustness**:
+    -   The primary source of potential runtime errors (e.g., `ZeroDivisionError`, `KeyError`) is linked to the `preset` dictionary. If values are incorrect (e.g., `coverage_per_litre = 0`) or keys are missing, the application would fail. This is mainly a configuration management concern.
+    -   **Recommendation**: For dynamic preset sources, implement checks for key existence or use `.get()` with default values when accessing preset dictionary items to prevent `KeyError` exceptions. Validate critical preset values (like divisors) upon loading.
+-   **Input Validation**:
+    -   Room names can be empty or duplicates.
+    -   **Recommendation**: Add validation to `st.text_input` for room names (e.g., ensure it's not empty). Consider strategies for handling duplicate room names if it impacts user experience.
+-   **Room Management Features**:
+    -   Lack of ability to edit or delete rooms.
+    -   **Recommendation**: Implement functionality to allow users to remove rooms from the list or edit their details after addition. This would significantly improve usability.
+-   **Error Handling (General)**:
+    -   While Streamlit provides a default error display, more specific error handling for preset issues could improve user experience.
+    -   **Recommendation**: As mentioned, make preset access more robust, potentially with try-except blocks for critical preset sections or user-friendly messages if configuration is faulty.
+-   **Modularity/Code Structure**:
+    -   For the current size, the monolithic script is manageable. As complexity grows, calculations could become hard to follow.
+    -   **Recommendation**: For future expansion, consider refactoring calculation logic into separate, well-defined functions. This would improve readability, maintainability, and testability.
+-   **Automated Testing**:
+    -   There is no indication of automated tests.
+    -   **Recommendation**: Introduce unit tests for the calculation logic. This would help ensure correctness during development and refactoring.
+
+## 6. Conclusion
+
+The `app.py` Quote Builder prototype demonstrates a solid foundation for its intended purpose. The core calculation logic is sound, and the use of session state and presets is appropriate for a Streamlit application of this scale. The primary areas for enhancement revolve around improving user experience through better input validation and room management features, increasing robustness against configuration errors, and preparing the codebase for future growth through modularity and automated testing. Addressing these points will lead to a more polished, reliable, and maintainable application.
