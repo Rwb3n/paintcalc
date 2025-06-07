@@ -1,8 +1,8 @@
 import streamlit as st
 from dataclasses import dataclass, field
-from typing import Dict, Literal, List, Union, Any # Added Any for quote_room/job return dicts
+from typing import Dict, Literal, List, Union, Any
 from enum import Enum
-import uuid # For RoomInput ID generation later
+import uuid
 
 # --- DATA STRUCTURES (NEW) ---
 class PaintSurface(Enum):
@@ -23,14 +23,14 @@ class MaterialRate:
 
 @dataclass
 class LabourRate:
-  task: str
+  task: str # User-friendly description of the task
   unit: Literal['sqm', 'm', 'item', 'hour']
   hoursPerUnitPerCoat: float
 
 @dataclass
 class PresetConfig:
   materialRates: Dict[PaintSurface, MaterialRate]
-  labourRates: Dict[str, LabourRate]
+  labourRates: Dict[str, LabourRate] # Keyed by a unique string identifier e.g., 'paint_walls_std_eff'
   miscCosts: Dict[str, float]
   markupPercent: float
   vatApplicable: bool
@@ -174,14 +174,34 @@ if "rooms" not in st.session_state:
 if "current_preset" not in st.session_state:
     st.session_state.current_preset: PresetConfig = DEFAULT_PRESET_CONFIG
 
+if 'selected_material_rate_key' not in st.session_state:
+    if st.session_state.current_preset and st.session_state.current_preset.materialRates:
+        st.session_state.selected_material_rate_key = list(st.session_state.current_preset.materialRates.keys())[0].value
+    else:
+        st.session_state.selected_material_rate_key = None
+
+if 'selected_labour_rate_key' not in st.session_state:
+    if st.session_state.current_preset and st.session_state.current_preset.labourRates:
+        st.session_state.selected_labour_rate_key = list(st.session_state.current_preset.labourRates.keys())[0]
+    else:
+        st.session_state.selected_labour_rate_key = None
+
+
 # --- UI CODE ---
 st.set_page_config(layout="wide")
 st.title("🎨 New Quote Builder Prototype")
-st.caption(f"Using default preset: Hourly Rate £{st.session_state.current_preset.hourlyChargeRate}, Markup {st.session_state.current_preset.markupPercent}%")
+st.caption(f"Using preset: Hourly Rate £{st.session_state.current_preset.hourlyChargeRate:.2f}, Markup {st.session_state.current_preset.markupPercent}%")
 
 
-# Helper function for selectbox formatting
+# Helper functions for selectbox formatting
 def format_paint_surface_option(option_value: str) -> str:
+    if option_value is None: return "N/A"
+    return option_value.replace('_', ' ').title()
+
+def format_task_key_option(option_value: str) -> str:
+    if option_value is None: return "N/A"
+    if st.session_state.current_preset and option_value in st.session_state.current_preset.labourRates:
+        return st.session_state.current_preset.labourRates[option_value].task
     return option_value.replace('_', ' ').title()
 
 # Section for Adding Rooms
@@ -238,7 +258,7 @@ with st.form(key='add_room_form', clear_on_submit=True):
     with prep_col2:
         removeWallpaperArea = st.number_input("Wallpaper Area to Remove (sqm)", min_value=0.0, value=0.0, step=0.5, help="Area of wallpaper to be stripped.")
 
-    st.markdown("---") # Visual separator before the button
+    st.markdown("---")
     submit_button = st.form_submit_button(label='➕ Add Room to Quote')
 
 if submit_button:
@@ -265,14 +285,14 @@ if submit_button:
     st.session_state.rooms.append(new_room)
     st.success(f"Room '{new_room.name}' added to quote!")
 
-st.markdown("---") # Separator after the form section
+st.markdown("---")
 
 # Display Added Rooms & Management
 st.header("2. Rooms in Current Quote")
 if st.session_state.rooms:
     if st.button("🧹 Clear All Rooms", help="Remove all rooms from the current quote."):
         st.session_state.rooms = []
-        st.experimental_rerun() # Rerun to update the list and quote immediately
+        st.experimental_rerun()
 
     for i, room_item in enumerate(st.session_state.rooms):
         with st.expander(f"{i+1}. {room_item.name} (ID: {room_item.id[:8]})"):
@@ -298,7 +318,7 @@ if st.session_state.rooms:
 else:
     st.info("No rooms added yet. Add rooms using the form above.")
 
-st.markdown("---") # Separator before the quote summary
+st.markdown("---")
 
 # Quote Estimate & Summary Section
 st.header("3. Quote Estimate & Summary")
@@ -318,7 +338,6 @@ else:
                         st.metric(label="Materials Cost", value=f"£{room_quote['materialsCost']:.2f}")
                     with col2:
                         st.metric(label="Labour Cost", value=f"£{room_quote['labourCost']:.2f}")
-                    # st.markdown(f"**Sub-Total for {room_quote['roomName']}: £{room_quote['totalCost']:.2f}**") # Already in expander title
         st.markdown("---")
 
         st.subheader("B. Overall Job Summary")
@@ -329,7 +348,7 @@ else:
             st.metric("Total Labour Cost", f"£{job_quote_details['totalLabourCost']:.2f}", help="Includes labour contingency.")
 
         with summary_col2:
-            if job_quote_details.get('totalAddOnsCost', 0) > 0: # Only show if there are add-ons
+            if job_quote_details.get('totalAddOnsCost', 0) > 0:
                  st.metric("Add-Ons Total", f"£{job_quote_details['totalAddOnsCost']:.2f}")
             st.markdown(f"**Sub-Total (Before Markup): £{job_quote_details['subTotalBeforeMarkup']:.2f}**")
             st.markdown(f"Markup ({st.session_state.current_preset.markupPercent}%): £{job_quote_details['markupAmount']:.2f}")
@@ -345,4 +364,165 @@ else:
 
 st.markdown("---")
 st.caption("End of Quote Builder Prototype.")
-# st.markdown("Next steps: Implement preset editing UI.") # Commenting out as this is the last planned step for now.
+
+# --- CONFIGURATION & DEBUG PANEL ---
+st.markdown("---")
+with st.expander("⚙️ Configuration & Debug Panel", expanded=False):
+    st.subheader("General Settings")
+    preset = st.session_state.current_preset
+    if preset is None:
+        st.error("Preset not loaded. Cannot display general settings.")
+    else:
+        temp_markup_percent = st.number_input(
+            "Markup Percent", value=preset.markupPercent, min_value=0.0, max_value=200.0, step=1.0, format="%.2f",
+            help="Percentage added to the subtotal for profit/overhead.", key="cfg_markup_percent"
+        )
+        temp_vat_applicable = st.checkbox(
+            "VAT Applicable", value=preset.vatApplicable, help="Check if VAT should be applied to the final quote.", key="cfg_vat_applicable"
+        )
+        temp_material_contingency = st.number_input(
+            "Material Contingency (%)", value=preset.materialContingencyPercent, min_value=0.0, max_value=100.0, step=1.0, format="%.2f",
+            help="Buffer percentage for material costs.", key="cfg_mat_contingency"
+        )
+        temp_labour_contingency = st.number_input(
+            "Labour Contingency (%)", value=preset.labourContingencyPercent, min_value=0.0, max_value=100.0, step=1.0, format="%.2f",
+            help="Buffer percentage for labour hours.", key="cfg_lab_contingency"
+        )
+        temp_team_size = st.number_input(
+            "Default Team Size", value=preset.defaultTeamSize, min_value=1, max_value=10, step=1,
+            help="Default number of people in a team (for future duration estimates).", key="cfg_team_size"
+        )
+        temp_hourly_rate = st.number_input(
+            "Hourly Charge Rate (£)", value=preset.hourlyChargeRate, min_value=0.0, step=0.50, format="%.2f",
+            help="The rate charged to the client per hour of labour.", key="cfg_hourly_rate"
+        )
+        if st.button("Apply General Settings & Recalculate Quote", key="apply_general_settings"):
+            st.session_state.current_preset.markupPercent = temp_markup_percent
+            st.session_state.current_preset.vatApplicable = temp_vat_applicable
+            st.session_state.current_preset.materialContingencyPercent = temp_material_contingency
+            st.session_state.current_preset.labourContingencyPercent = temp_labour_contingency
+            st.session_state.current_preset.defaultTeamSize = temp_team_size
+            st.session_state.current_preset.hourlyChargeRate = temp_hourly_rate
+            st.experimental_rerun()
+
+    st.markdown("---")
+    st.subheader("Miscellaneous Costs")
+    if preset is not None and hasattr(preset, 'miscCosts') and preset.miscCosts:
+        updated_misc_costs_values = {}
+        for key, value in preset.miscCosts.items():
+            label = key.replace('_', ' ').title()
+            updated_misc_costs_values[key] = st.number_input(
+                label, value=float(value), min_value=0.0, step=0.50, format="%.2f", key=f"debug_misc_{key}"
+            )
+        if st.button("Apply Miscellaneous Costs & Recalculate Quote", key="apply_misc_costs"):
+            for key, new_value in updated_misc_costs_values.items():
+                st.session_state.current_preset.miscCosts[key] = new_value
+            st.experimental_rerun()
+    else:
+        st.caption("No miscellaneous costs found or preset not loaded.")
+
+    st.markdown("---")
+    st.subheader("Material Rates")
+    if preset is not None and hasattr(preset, 'materialRates') and preset.materialRates:
+        material_rate_key_options = [ps_enum.value for ps_enum in preset.materialRates.keys()]
+
+        def update_selected_material_key_callback():
+            st.session_state.selected_material_rate_key = st.session_state.debug_material_rate_selector_widget
+
+        current_material_selection_index = 0
+        if st.session_state.selected_material_rate_key in material_rate_key_options:
+            current_material_selection_index = material_rate_key_options.index(st.session_state.selected_material_rate_key)
+        elif material_rate_key_options:
+             st.session_state.selected_material_rate_key = material_rate_key_options[0]
+
+        st.selectbox(
+            "Select Material/Surface Type to Edit:",
+            options=material_rate_key_options,
+            index=current_material_selection_index,
+            format_func=format_paint_surface_option,
+            key="debug_material_rate_selector_widget",
+            on_change=update_selected_material_key_callback
+        )
+
+        selected_key_str_material = st.session_state.get('selected_material_rate_key')
+        if selected_key_str_material:
+            try:
+                selected_enum_val = PaintSurface(selected_key_str_material)
+                if selected_enum_val in preset.materialRates:
+                    rate_to_edit = preset.materialRates[selected_enum_val]
+
+                    st.markdown(f"**Editing Rates for: {format_paint_surface_option(selected_key_str_material)}**")
+
+                    new_coverage = st.number_input(
+                        "Coverage per Litre (sqm/L or m/L)", value=rate_to_edit.coveragePerLitre,
+                        min_value=0.1, step=0.1, format="%.2f", key=f"debug_mat_rate_coverage_{selected_key_str_material}"
+                    )
+                    new_cost = st.number_input(
+                        "Cost per Litre (£)", value=rate_to_edit.costPerLitre,
+                        min_value=0.01, step=0.01, format="%.2f", key=f"debug_mat_rate_cost_{selected_key_str_material}"
+                    )
+
+                    if st.button("Apply Changes to This Material Rate & Recalculate", key=f"apply_mat_rate_{selected_key_str_material}"):
+                        st.session_state.current_preset.materialRates[selected_enum_val].coveragePerLitre = new_coverage
+                        st.session_state.current_preset.materialRates[selected_enum_val].costPerLitre = new_cost
+                        st.experimental_rerun()
+                else:
+                    st.warning(f"Selected material rate '{format_paint_surface_option(selected_key_str_material)}' not found. Please re-select.")
+            except ValueError:
+                st.error(f"Invalid material surface type in session state: {selected_key_str_material}. Please re-select.")
+        else:
+            st.caption("Select a material/surface type above to see or edit its rates.")
+    else:
+        st.caption("No material rates found in preset or preset not loaded.")
+
+    st.markdown("---")
+    st.subheader("Labour Rates")
+    if preset is not None and hasattr(preset, 'labourRates') and preset.labourRates:
+        labour_rate_key_options = list(preset.labourRates.keys())
+
+        def update_selected_labour_key_callback():
+            st.session_state.selected_labour_rate_key = st.session_state.debug_labour_rate_selector_widget
+
+        current_labour_selection_index = 0
+        if st.session_state.selected_labour_rate_key in labour_rate_key_options:
+            current_labour_selection_index = labour_rate_key_options.index(st.session_state.selected_labour_rate_key)
+        elif labour_rate_key_options:
+            st.session_state.selected_labour_rate_key = labour_rate_key_options[0]
+            # Update index to 0 as we just defaulted the selected key
+            current_labour_selection_index = 0
+
+
+        st.selectbox(
+            "Select Labour Task to Edit:",
+            options=labour_rate_key_options,
+            index=current_labour_selection_index,
+            format_func=format_task_key_option,
+            key="debug_labour_rate_selector_widget",
+            on_change=update_selected_labour_key_callback
+        )
+
+        selected_key_str_labour = st.session_state.get('selected_labour_rate_key')
+        if selected_key_str_labour and selected_key_str_labour in preset.labourRates:
+            labour_rate_to_edit = preset.labourRates[selected_key_str_labour]
+            st.markdown(f"**Editing Task: {labour_rate_to_edit.task}** (Key: `{selected_key_str_labour}`)")
+            st.write(f"Current Unit: `{labour_rate_to_edit.unit}`")
+
+            new_hours_val = st.number_input(
+                "Hours per Unit per Coat",
+                value=labour_rate_to_edit.hoursPerUnitPerCoat,
+                min_value=0.0, step=0.01, format="%.2f",
+                key=f"debug_lr_hours_{selected_key_str_labour}" # Dynamic key
+            )
+
+            if st.button("Apply Changes to This Labour Rate & Recalculate", key=f"apply_labour_rate_changes_{selected_key_str_labour}"):
+                st.session_state.current_preset.labourRates[selected_key_str_labour].hoursPerUnitPerCoat = new_hours_val
+                st.experimental_rerun()
+        else:
+            st.caption("Select a labour task above to see or edit its rates.")
+    else:
+        st.caption("No labour rates found in preset or preset not loaded.")
+
+    st.markdown("---")
+    st.caption("End of Configuration Panel.")
+
+[end of app.py]
