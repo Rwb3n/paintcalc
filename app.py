@@ -523,5 +523,3 @@ with st.expander("⚙️ Configuration & Debug Panel", expanded=False):
 
     st.markdown("---")
     st.caption("End of Configuration Panel.")
-
-[end of app.py]
