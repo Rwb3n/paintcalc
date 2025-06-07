@@ -1,0 +1,77 @@
+Analysis of Preset Configuration Usage in `app.py`:
+
+**`preset["name"]`**:
+- Value: "Standard Residential"
+- Used: No. This key is not used in any calculations within Tab 2 or Tab 3, nor is it explicitly used for display in the provided UI code for these tabs.
+- Comment: This key currently serves an informational purpose, potentially for identifying the preset if multiple presets were available. It could be used to display the active preset's name in the UI or in generated reports.
+
+**`preset["hourly_rate"]`**:
+- Value: `35.0`
+- Used: Yes.
+- How: In Tab 2, for calculating `labour_cost`: `labour_cost = labour_hours * preset["hourly_rate"]`.
+- Correctness: Appears correct for its intended use in labour cost calculation.
+
+**`preset["markup_percent"]`**:
+- Value: `20.0`
+- Used: Yes.
+- How:
+    - In Tab 3 calculation: `markup = subtotal * preset["markup_percent"] / 100`.
+    - In Tab 3 UI display: `st.write(f"Markup ({preset['markup_percent']}%): £{markup:.2f}")`.
+- Correctness: Appears correct for calculating the markup amount and displaying the percentage.
+
+**`preset["material_contingency"]`**:
+- Value: `5.0`
+- Used: Yes.
+- How: In Tab 3, for calculating `mat_cont`: `mat_cont = material_cost * preset["material_contingency"] / 100`.
+- Correctness: Appears correct for calculating material contingency.
+
+**`preset["labour_contingency"]`**:
+- Value: `10.0`
+- Used: Yes.
+- How: In Tab 3, for calculating `lab_cont`: `lab_cont = labour_cost * preset["labour_contingency"] / 100`.
+- Correctness: Appears correct for calculating labour contingency.
+
+**`preset["vat_applicable"]`**:
+- Value: `True`
+- Used: Yes.
+- How: In Tab 3, for conditional VAT calculation: `vat = total * preset["vat_rate"] / 100 if preset["vat_applicable"] else 0`.
+- Correctness: Appears correct for determining if VAT should be applied.
+
+**`preset["vat_rate"]`**:
+- Value: `20.0`
+- Used: Yes.
+- How:
+    - In Tab 3 calculation (if `vat_applicable` is true): `vat = total * preset["vat_rate"] / 100`.
+    - In Tab 3 UI display: `st.write(f"VAT ({preset['vat_rate']}%): £{vat:.2f}")`.
+- Correctness: Appears correct for calculating VAT amount and displaying the rate.
+
+**`preset["material"]["cost_per_litre"]`**:
+- Value: `15.0`
+- Used: Yes.
+- How: In Tab 2, for calculating `material_cost`: `material_cost = litres * preset["material"]["cost_per_litre"]`.
+- Correctness: Appears correct for calculating the cost of paint.
+
+**`preset["material"]["coverage_per_litre"]`**:
+- Value: `12.0`
+- Used: Yes.
+- How: In Tab 2, for calculating `litres`: `litres = total_area / preset["material"]["coverage_per_litre"]`.
+- Correctness: Appears correct for calculating the quantity of paint needed. Potential `ZeroDivisionError` if this value was 0, but it's `12.0` in the preset.
+
+**`preset["labour_rate_per_sqm"]`**:
+- Value: `0.15` (comment indicates "Hours per sqm")
+- Used: Yes.
+- How: In Tab 2, for calculating `labour_hours`: `labour_hours = total_area * preset["labour_rate_per_sqm"]`.
+- Correctness: Appears correct for estimating labour hours based on total area.
+
+**Hardcoded Values/Magic Numbers**:
+- The divisor `100` is consistently used for percentage calculations (e.g., `markup_percent / 100`). This is a standard mathematical practice for converting percentage figures into decimal multipliers and is not considered a "magic number" that needs to be part of the `preset`.
+- No other hardcoded numerical values were identified within the calculation logic of Tab 2 and Tab 3 that seem out of place or would clearly benefit from being moved to the `preset` dictionary. UI default values in widgets are distinct from these calculation parameters.
+
+**Consistency of Access**:
+- Method: All preset values are accessed directly using dictionary key notation (e.g., `preset["key"]` or `preset["parent_key"]["child_key"]`). This approach is applied consistently throughout the code.
+- Issues: For a statically defined global `preset` like in this script, direct key access is clear and generally safe. If the `preset` dictionary were loaded from an external source or could have a variable structure, using the `.get("key", default_value)` method would offer greater robustness against potential `KeyError` exceptions if a key were missing. However, for the current implementation, the direct access method is acceptable.
+
+**Overall Preset Usage**:
+- Completeness: The `preset` dictionary appears to comprehensively cover all relevant configurable financial rates, percentages, and material properties used in the application's core calculation logic.
+- Clarity: The structure of the `preset` (including the nested `material` dictionary) is logical and the key names are largely self-explanatory, contributing to code readability.
+- Maintainability: Centralizing these values in the `preset` dictionary makes them easy to find and modify, which is good for maintainability. If these values needed to be changed, they are all in one place.

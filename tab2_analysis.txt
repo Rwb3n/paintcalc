@@ -1,0 +1,48 @@
+Analysis of Tab 2 Calculations:
+
+**total_area = sum(r['area'] * r['coats'] for r in st.session_state.rooms)**
+- Clarity: Clear. The use of a list comprehension with descriptive variable names (`area`, `coats`) makes the calculation easy to understand.
+- Correctness: Correct. This formula accurately calculates the total surface area to be painted by summing the area of each room multiplied by the number of coats required for that room.
+- Potential Issues:
+    - If `st.session_state.rooms` is empty, `sum()` correctly returns 0, which is appropriate behavior (no rooms mean zero area).
+    - The calculation assumes that `area` and `coats` keys will always be present in each dictionary within the `st.session_state.rooms` list. This is currently ensured by the input mechanism in Tab 1.
+- Assumptions:
+    - Assumes 'area' represents the paintable wall surface area in square meters for a single coat.
+    - Assumes 'coats' is the number of times this area needs to be painted.
+    - Assumes 'area' and 'coats' are numeric and non-negative, which is enforced by `st.number_input` in Tab 1.
+
+**litres = total_area / preset["material"]["coverage_per_litre"]**
+- Clarity: Clear. The variable names (`total_area`, `litres`, `coverage_per_litre`) are descriptive and make the purpose of the calculation evident.
+- Correctness: Correct. This formula correctly determines the total quantity of paint (in litres) required by dividing the `total_area` (in sqm) by the paint's coverage rate (`coverage_per_litre` in sqm/litre).
+- Potential Issues:
+    - `ZeroDivisionError`: If `preset["material"]["coverage_per_litre"]` were 0, this would lead to a division by zero error. However, as it's a preset value (currently 12.0), this is unlikely unless the preset is incorrectly modified.
+    - `KeyError`: If the nested keys `preset["material"]` or `preset["material"]["coverage_per_litre"]` do not exist (e.g., due to a misconfigured preset or changes in preset structure), a KeyError would occur.
+- Assumptions:
+    - Assumes `preset["material"]["coverage_per_litre"]` is a positive number representing the area (in sqm) that one litre of paint can cover.
+    - Assumes `total_area` is in square meters.
+
+**material_cost = litres * preset["material"]["cost_per_litre"]**
+- Clarity: Clear. The variable names clearly indicate that this is a calculation for the cost of materials.
+- Correctness: Correct. This formula accurately calculates the total cost of paint by multiplying the total `litres` needed by the `cost_per_litre`.
+- Potential Issues:
+    - `KeyError`: If the nested keys `preset["material"]` or `preset["material"]["cost_per_litre"]` do not exist, a KeyError would occur.
+- Assumptions:
+    - Assumes `preset["material"]["cost_per_litre"]` represents the cost for one litre of the specified paint.
+
+**labour_hours = total_area * preset["labour_rate_per_sqm"]**
+- Clarity: Clear. Variable names are descriptive and convey the meaning of the calculation.
+- Correctness: Correct. This formula calculates the total estimated labour hours by multiplying the `total_area` to be painted by a predefined `labour_rate_per_sqm` (hours/sqm).
+- Potential Issues:
+    - `KeyError`: If `preset["labour_rate_per_sqm"]` does not exist in the preset dictionary, a KeyError would occur.
+- Assumptions:
+    - Assumes `preset["labour_rate_per_sqm"]` is a predefined rate representing the number of labour hours required to paint one square meter of surface.
+    - Assumes the `total_area` is the primary driver for labour hours, and factors like room complexity or prep work are either averaged into this rate or handled elsewhere (e.g., contingencies).
+
+**labour_cost = labour_hours * preset["hourly_rate"]**
+- Clarity: Clear. The variable names are self-explanatory.
+- Correctness: Correct. This formula calculates the total labour cost by multiplying the total estimated `labour_hours` by the `hourly_rate`.
+- Potential Issues:
+    - `KeyError`: If `preset["hourly_rate"]` does not exist in the preset dictionary, a KeyError would occur.
+- Assumptions:
+    - Assumes `preset["hourly_rate"]` is a standard rate for one hour of labour.
+    - Assumes `labour_hours` accurately reflects the time that will be billed at this rate.
