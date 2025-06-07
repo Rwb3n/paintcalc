@@ -488,7 +488,6 @@ with st.expander("⚙️ Configuration & Debug Panel", expanded=False):
             current_labour_selection_index = labour_rate_key_options.index(st.session_state.selected_labour_rate_key)
         elif labour_rate_key_options:
             st.session_state.selected_labour_rate_key = labour_rate_key_options[0]
-            # Update index to 0 as we just defaulted the selected key
             current_labour_selection_index = 0
 
 
@@ -511,7 +510,7 @@ with st.expander("⚙️ Configuration & Debug Panel", expanded=False):
                 "Hours per Unit per Coat",
                 value=labour_rate_to_edit.hoursPerUnitPerCoat,
                 min_value=0.0, step=0.01, format="%.2f",
-                key=f"debug_lr_hours_{selected_key_str_labour}" # Dynamic key
+                key=f"debug_lr_hours_{selected_key_str_labour}"
             )
 
             if st.button("Apply Changes to This Labour Rate & Recalculate", key=f"apply_labour_rate_changes_{selected_key_str_labour}"):
