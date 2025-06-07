@@ -292,7 +292,7 @@ st.header("2. Rooms in Current Quote")
 if st.session_state.rooms:
     if st.button("🧹 Clear All Rooms", help="Remove all rooms from the current quote."):
         st.session_state.rooms = []
-        st.experimental_rerun()
+        st.rerun()
 
     for i, room_item in enumerate(st.session_state.rooms):
         with st.expander(f"{i+1}. {room_item.name} (ID: {room_item.id[:8]})"):
@@ -314,7 +314,7 @@ if st.session_state.rooms:
 
             if st.button(f"❌ Remove Room: {room_item.name}", key=f"remove_room_{room_item.id}", help="Remove this specific room from the quote."):
                 st.session_state.rooms.pop(i)
-                st.experimental_rerun()
+                st.rerun()
 else:
     st.info("No rooms added yet. Add rooms using the form above.")
 
@@ -403,7 +403,7 @@ with st.expander("⚙️ Configuration & Debug Panel", expanded=False):
             st.session_state.current_preset.labourContingencyPercent = temp_labour_contingency
             st.session_state.current_preset.defaultTeamSize = temp_team_size
             st.session_state.current_preset.hourlyChargeRate = temp_hourly_rate
-            st.experimental_rerun()
+            st.rerun()
 
     st.markdown("---")
     st.subheader("Miscellaneous Costs")
@@ -417,7 +417,7 @@ with st.expander("⚙️ Configuration & Debug Panel", expanded=False):
         if st.button("Apply Miscellaneous Costs & Recalculate Quote", key="apply_misc_costs"):
             for key, new_value in updated_misc_costs_values.items():
                 st.session_state.current_preset.miscCosts[key] = new_value
-            st.experimental_rerun()
+            st.rerun()
     else:
         st.caption("No miscellaneous costs found or preset not loaded.")
 
@@ -465,7 +465,7 @@ with st.expander("⚙️ Configuration & Debug Panel", expanded=False):
                     if st.button("Apply Changes to This Material Rate & Recalculate", key=f"apply_mat_rate_{selected_key_str_material}"):
                         st.session_state.current_preset.materialRates[selected_enum_val].coveragePerLitre = new_coverage
                         st.session_state.current_preset.materialRates[selected_enum_val].costPerLitre = new_cost
-                        st.experimental_rerun()
+                        st.rerun()
                 else:
                     st.warning(f"Selected material rate '{format_paint_surface_option(selected_key_str_material)}' not found. Please re-select.")
             except ValueError:
@@ -515,7 +515,7 @@ with st.expander("⚙️ Configuration & Debug Panel", expanded=False):
 
             if st.button("Apply Changes to This Labour Rate & Recalculate", key=f"apply_labour_rate_changes_{selected_key_str_labour}"):
                 st.session_state.current_preset.labourRates[selected_key_str_labour].hoursPerUnitPerCoat = new_hours_val
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.caption("Select a labour task above to see or edit its rates.")
     else:
